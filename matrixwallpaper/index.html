@@ -1,0 +1,115 @@
+﻿<html>
+	<head>
+		<meta charset="utf-8">
+		<title>MyMatrix</title>
+		<style class="csscreations">
+			/*basic reset*/
+			* {margin: 0; padding: 0;}
+			/*adding a black bg to the body to make things clearer*/
+			body {background: black;}
+			canvas {display: block;}
+		</style>
+	</head>
+	<body>
+		<canvas id="c"></canvas>
+		<script>
+			var c = document.getElementById("c");
+			var ctx = c.getContext("2d");
+
+			//making the canvas full screen
+			c.height = window.innerHeight;
+			c.width = window.innerWidth;
+
+			//chinese characters - taken from the unicode charset
+			// var chinese = "田由甲申甴电甶男甸甹町画甼甽甾甿畀畁畂畃畄畅畆畇畈畉畊畋界畍畎畏畐畑";
+			var kana = "ーぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶ゛゜";
+			//converting the string into an array of single characters
+			// chinese = chinese.split("");
+			kana = kana.split("");
+
+			function TextCanvas(text, font, fontsize, textFillStyle, bgFillStyle) {
+				this.text = text;
+				this.font = font;
+				this.fontsize = fontsize;
+				this.textFillStyle = textFillStyle;
+				this.bgFillStyle = bgFillStyle;
+				this.tempCanvas = document.createElement("canvas");
+				this.tempCtx = this.tempCanvas.getContext("2d");
+				this.firstTime = true;
+			}
+
+			TextCanvas.prototype.draw = function(context, x, y) {
+				if (this.firstTime) {
+					this.tempCanvas.width = this.fontsize + 2;
+					this.tempCanvas.height = this.fontsize + 2;
+					this.tempCtx.font = this.font;
+					this.tempCtx.fillStyle = this.bgFillStyle;
+					this.tempCtx.fillRect(0, 0, this.tempCanvas.width, this.tempCanvas.height);
+					this.tempCtx.fillStyle = this.textFillStyle;
+					this.tempCtx.fillText(this.text, 0, this.fontsize, this.tempCanvas.width);
+					this.firstTime = false;
+					console.log("generated canvas for kana '"+this.text+"'");
+				}
+				context.drawImage(this.tempCanvas, x, y);
+			}
+
+			var font_size = 14;
+			var font_style = "bold " + font_size + "px Courier";
+			var columns = c.width/font_size; //number of columns for the rain
+			//an array of drops - one per column
+			var drops = [];
+			var speed = [];
+			var countdown = [];
+			var offset = [];
+			var canvas = [];
+			//x below is the x coordinate
+			//1 = y co-ordinate of the drop(same for every drop initially)
+			for(var x = 0; x < columns*10; x++) {
+				drops[x] = c.height*2;
+				speed[x] = Math.floor(Math.random()*5);
+				countdown[x] = 0;
+				offset[x] = (Math.floor(Math.random()*font_size)/2)-font_size;
+			}
+
+			for(var x = 0; x < kana.length; x++) {
+				canvas[x] = new TextCanvas(kana[x], font_style, font_size, "#F00", "rgba(0,0,0,0.5)");
+			}
+
+			//drawing the characters
+			function draw() {
+				//Black BG for the canvas
+				//translucent BG to show trail
+				ctx.fillStyle = "rgba(0, 0, 0, 0.02)";
+				ctx.fillRect(0, 0, c.width, c.height);
+				//ctx.fillStyle = "#F00"; //green text
+				ctx.font = font_style;
+				//looping over drops
+				for(var i = 0; i < drops.length; i++) {
+					countdown[i]--;
+					if(countdown[i] < 0) {
+						//a random chinese character to print
+						// var text = chinese[Math.floor(Math.random()*chinese.length)];
+						var text = canvas[Math.floor(Math.random()*canvas.length)];
+						//x = i*font_size, y = value of drops[i]*font_size
+						// ctx.fillStyle = "#000000";
+						// ctx.fillRect((i%columns)*font_size+offset[i], (drops[i]-1)*font_size, font_size, font_size);
+						// ctx.fillStyle = "#FF0000"; //green text
+						// ctx.fillText(text.text, (i%columns)*font_size+offset[i], drops[i]*font_size);
+						text.draw(ctx, ((i%columns)*font_size+offset[i]), (drops[i]*font_size));
+						//sending the drop back to the top randomly after it has crossed the screen
+						//adding a randomness to the reset to make the drops scattered on the Y axis
+						if(drops[i]*font_size > c.height && Math.random() > 0.99) {
+							drops[i] = 0;
+					        speed[i] = Math.floor(Math.random()*5);
+							offset[i] = (Math.floor(Math.random()*font_size)/2)-font_size;
+						}
+						//incrementing Y coordinate
+						drops[i]++;
+						countdown[i]=speed[i];
+					}
+				}
+			}
+			setInterval(draw, 50);
+		</script>
+	</body>
+</html>
